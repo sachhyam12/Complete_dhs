@@ -118,6 +118,5 @@ export const getWithAuth = httpService.getWithAuth.bind(httpService);
 export const postWithAuth = httpService.postWithAuth.bind(httpService);
 export const putWithAuth = httpService.putWithAuth.bind(httpService);
 export const deleteWithAuth = httpService.deleteWithAuth.bind(httpService);
-
 export const postWithoutAuth = httpService.postWithoutAuth.bind(httpService);
 export const getWithoutAuth = httpService.getWithoutAuth.bind(httpService);

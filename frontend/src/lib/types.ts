@@ -29,8 +29,6 @@ export interface DoctorFormData {
   slotDurationMinutes?: number;
 }
 
-
-
 // ✅ Enhanced User Interface
 export interface User {
   id: string;
@@ -39,7 +37,7 @@ export interface User {
   type: "doctor" | "patient";
   phone?: string;
   profileImage?: string;
-  isVerified:boolean
+  isVerified: boolean;
 
   // Patient fields
   dob?: string;
@@ -83,7 +81,6 @@ export interface User {
   slotDurationMinutes?: number;
 }
 
-
 // interfaces/Doctor.ts
 export interface Doctor {
   _id: string;
@@ -107,7 +104,7 @@ export interface Doctor {
   };
   dailyTimeRanges: {
     start: string; // e.g., "09:00"
-    end: string;   // e.g., "12:00"
+    end: string; // e.g., "12:00"
   }[];
   slotDurationMinutes: number;
   profileImage: string;
@@ -116,7 +113,6 @@ export interface Doctor {
   updatedAt: Date;
 }
 
-
 export interface DoctorFilters {
   search?: string;
   specialization?: string;
@@ -124,8 +120,16 @@ export interface DoctorFilters {
   city?: string;
   minFees?: number;
   maxFees?: number;
-  sortBy?: 'fees' | 'experience' | 'name' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
+  sortBy?: "fees" | "experience" | "name" | "createdAt";
+  sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;
+}
+
+export interface DoctorItem {
+  _id: string;
+  name: string;
+  email: string;
+  specialization?: string;
+  isActive?: boolean;
 }
