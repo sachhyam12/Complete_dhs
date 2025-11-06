@@ -6,7 +6,15 @@ import { Appointment, useAppointmentStore } from "@/store/appointmentStore";
 import { Card, CardContent } from "../ui/card";
 import Link from "next/link";
 import { Button } from "../ui/button";
-import { Calendar, Clock, FileText, MapPin, Phone, Star, Video } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  FileText,
+  MapPin,
+  Phone,
+  Star,
+  Video,
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Badge } from "../ui/badge";
@@ -76,7 +84,8 @@ const PatientDashboardContent = () => {
   const canJoinCall = (appointment: any) => {
     const appointmentTime = new Date(appointment.slotStartIso);
     const now = new Date();
-    const diffMintues = (appointmentTime.getTime() - now.getTime()) / (1000 * 60);
+    const diffMintues =
+      (appointmentTime.getTime() - now.getTime()) / (1000 * 60);
 
     return (
       isToday(appointment.slotStartIso) &&
@@ -154,7 +163,7 @@ const PatientDashboardContent = () => {
               <div className="text-center md:text-left">
                 <div className="flex justify-center gap-2 text-sm text-gray-600">
                   <span className="font-semibold">Fee:</span>
-                  <p>₹{appointment.doctorId?.fees}</p>
+                  <p>NPR{appointment.doctorId?.fees}</p>
                 </div>
 
                 {appointment.symptoms && (
@@ -169,49 +178,45 @@ const PatientDashboardContent = () => {
             </div>
 
             <div className="mt-6 flex flex-col md:flex-row items-center md:justify-between space-y-3 md:space-y-0">
+              <div className="flex space-x-2">
+                {canJoinCall(appointment) && (
+                  <Link href={`/call/${appointment._id}`}>
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      <Video className="w-4 h-4 mr-2" />
+                      Join Call
+                    </Button>
+                  </Link>
+                )}
 
-            <div className="flex space-x-2">
-              {canJoinCall(appointment) && (
-                <Link href={`/call/${appointment._id}`}>
-                <Button
-                 size='sm'
-                 className="bg-green-600 hover:bg-green-700"
-                >
-                  <Video className="w-4 h-4 mr-2"/>
-                  Join Call
-                  </Button></Link>
-              )}
-
-                  {appointment.status === 'Completed' && appointment.prescription && (
+                {appointment.status === "Completed" &&
+                  appointment.prescription && (
                     <PrescriptionViewModal
-                     appointment={appointment}
-                     userType="patient"
-                     trigger={
-                      <Button
-                       variant='outline'
-                       size='sm'
-                       className="text-green-700 border-green-200 hover:bg-green-50"
-                      >
-                        <FileText className="w-4 h-4 mr-2"/>
-                        View Prescription
-                      </Button>
-                     }
+                      appointment={appointment}
+                      userType="patient"
+                      trigger={
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-green-700 border-green-200 hover:bg-green-50"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          View Prescription
+                        </Button>
+                      }
                     />
                   )}
+              </div>
 
-
-
-            </div>
-
-            {appointment.status === 'Completed' && (
-              <div className="flex items-center space-x-1">
-                {[...Array(5)].map((_,i) => (
-                  <Star
-                   className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                  />
-                ))}
+              {appointment.status === "Completed" && (
+                <div className="flex items-center space-x-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  ))}
                 </div>
-            )}
+              )}
             </div>
           </div>
         </div>

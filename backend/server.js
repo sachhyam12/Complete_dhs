@@ -5,6 +5,7 @@ const morgan = require("morgan");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const adminRoutes = require("./routes/admin");
+const paymentRoutes = require("./routes/payment");
 require("dotenv").config();
 require("./config/passport");
 const passportLib = require("passport");
@@ -52,11 +53,35 @@ app.use("/api/doctor", require("./routes/doctor"));
 app.use("/api/admin", adminRoutes);
 app.use("/api/patient", require("./routes/patient"));
 app.use("/api/appointment", require("./routes/appointment"));
-app.use("/api/payment", require("./routes/payment"));
+app.use("/api/payment", paymentRoutes);
 
 app.get("/health", (req, res) =>
   res.ok({ time: new Date().toISOString() }, "OK")
 );
+
+// --- MOCK FONEPAY DEMO FLOW ---
+app.get("/fake-fonepay/api/merchantRequest/pay", (req, res) => {
+  const { merchant, invoice, amount, PRN, remarks, responseUrl } = req.query;
+
+  res.send(`
+    <html>
+      <head><title>Fonepay Demo</title></head>
+      <body style="font-family:sans-serif; text-align:center; padding-top:100px;">
+        <h2>🔶 Fonepay Sandbox (Demo Mode)</h2>
+        <p>Merchant: ${merchant}</p>
+        <p>Invoice: ${invoice}</p>
+        <p>Amount: ${amount}</p>
+        <p>Remarks: ${remarks}</p>
+        <p>Processing payment...</p>
+        <script>
+          setTimeout(() => {
+            window.location.href = "${responseUrl}?PRN=${PRN}&status=SUCCESS&message=Payment successful";
+          }, 3000);
+        </script>
+      </body>
+    </html>
+  `);
+});
 
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => console.log(`Server listening on ${PORT}`));

@@ -22,6 +22,7 @@ router.get(
     query("sortOrder").optional().isIn(["asc", "desc"]),
     query("page").optional().isInt({ min: 1 }),
     query("limit").optional().isInt({ min: 1, max: 100 }),
+    query("isActive").isBoolean([true, false]),
   ],
   validate,
   async (req, res) => {
@@ -37,6 +38,7 @@ router.get(
         sortOrder = "desc",
         page = 1,
         limit = 20,
+        isActive,
       } = req.query;
 
       const filter = { isVerified: true };
@@ -63,6 +65,8 @@ router.get(
           { "hospitalInfo.name": { $regex: search, $options: "i" } },
         ];
       }
+
+      if (isActive !== undefined) filter.isActive = isActive === "true";
 
       const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
       const skip = (Number(page) - 1) * Number(limit);
@@ -223,7 +227,7 @@ router.get(
           totalPatients,
           todayAppointments: todayAppointments.length,
           totalRevenue,
-          completedAppointments:completedAppointmentCount,
+          completedAppointments: completedAppointmentCount,
           averageRating: 4.8,
         },
         todayAppointments,
@@ -235,7 +239,7 @@ router.get(
         },
       };
 
-      res.ok(dashboardData,'Dashboard data retrived')
+      res.ok(dashboardData, "Dashboard data retrived");
     } catch (error) {
       console.error("Dashboard error", error);
       res.serverError("failed to fetch doctor dashboard", [error.message]);

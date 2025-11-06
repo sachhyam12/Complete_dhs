@@ -97,6 +97,7 @@ const DoctorOnboardingForm = () => {
         dailyTimeRanges: formData.dailyTimeRanges,
         slotDurationMinutes: formData.slotDurationMinutes,
       });
+
       router.push("/doctor/dashboard");
     } catch (error) {
       console.error("Profile update failed", error);
@@ -220,7 +221,7 @@ const DoctorOnboardingForm = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="fees">Consultations Fee (₹) </Label>
+                <Label htmlFor="fees">Consultations Fee (NPR) </Label>
                 <Input
                   id="fees"
                   name="fees"

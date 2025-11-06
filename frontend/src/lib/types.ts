@@ -131,5 +131,5 @@ export interface DoctorItem {
   name: string;
   email: string;
   specialization?: string;
-  isActive?: boolean;
+  isActive: boolean;
 }

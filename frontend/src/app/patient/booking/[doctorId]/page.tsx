@@ -240,7 +240,7 @@ const page = () => {
                       {step === 1
                         ? "Select Time"
                         : step === 2
-                        ? "Deatils"
+                        ? "Details"
                         : "Payment"}
                     </span>
                   </div>

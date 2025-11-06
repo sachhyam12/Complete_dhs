@@ -444,7 +444,7 @@ const ProfilePage = ({ userType }: ProfileProps) => {
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label>Consultation Fee(₹)</Label>
+        <Label>Consultation Fee(NPR)</Label>
         <Input
           type="number"
           value={formData.fees || ""}

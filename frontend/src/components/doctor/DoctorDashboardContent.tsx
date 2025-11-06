@@ -163,7 +163,9 @@ const DoctorDashboardContent = () => {
     },
     {
       title: "Total Revenue",
-      value: `₹${dashboardData?.stats?.totalRevenue?.toLocaleString() || "0"}`,
+      value: `NPR${
+        dashboardData?.stats?.totalRevenue?.toLocaleString() || "0"
+      }`,
       icon: DollarSign,
       color: "text-purple-600",
       bgColor: "bg-purple-50",
@@ -330,7 +332,7 @@ const DoctorDashboardContent = () => {
                                 <Phone className="w-4 h-4 text-green-600" />
                               )}
                               <span className="text-sm text-gray-500">
-                                ₹{appointment.doctorId?.fees}
+                                NPR{appointment.doctorId?.fees}
                               </span>
                             </div>
                           </div>
@@ -408,7 +410,7 @@ const DoctorDashboardContent = () => {
                                 <Phone className="w-4 h-4 text-green-600" />
                               )}
                               <span className="text-sm text-gray-500">
-                                ₹{appointment.doctorId?.fees}
+                                NPR{appointment.doctorId?.fees}
                               </span>
                             </div>
                           </div>
@@ -454,10 +456,8 @@ const DoctorDashboardContent = () => {
                       {dashboardData?.performance?.completionRate}
                     </span>
                   </div>
-                                <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">
-                      Response Time
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600">Response Time</span>
                     <span className="font-semibold text-blue-600">
                       {dashboardData?.performance?.responseTime}
                     </span>

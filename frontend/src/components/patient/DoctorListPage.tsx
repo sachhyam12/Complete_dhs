@@ -345,7 +345,7 @@ const DoctorListPage = () => {
                         Consultation Fee:
                       </p>
                       <p className="font-bold text-green-600 text-lg">
-                        ₹{doctor.fees}
+                        Rs{doctor.fees}
                       </p>
                     </div>
                   </div>

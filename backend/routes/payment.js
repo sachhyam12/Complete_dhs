@@ -1,176 +1,117 @@
 const express = require("express");
-const axios = require("axios");
-const crypto = require("crypto");
-const { authenticate, requireRole } = require("../middleware/auth");
-const { body } = require("express-validator");
-const validate = require("../middleware/validate");
-const Appointment = require("../modal/Appointment");
-
 const router = express.Router();
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 /**
- * Configuration
- * FonePay provides merchant details and a shared secret for hashing.
+ * @route GET /api/payment/fonepay
+ * @desc Generate Fonepay redirect URL (mock demo)
+ * @access Public
  */
-const FONEPAY_MERCHANT_CODE = process.env.FONEPAY_MERCHANT_CODE; // e.g. "FONEPAYTEST"
-const FONEPAY_SECRET_KEY = process.env.FONEPAY_SECRET_KEY; // secret hash key
-const FONEPAY_BASE_URL =
-  process.env.FONEPAY_BASE_URL ||
-  "https://dev-clientapi.fonepay.com/api/merchantRequest";
-
-//
-// 1️⃣ CREATE PAYMENT ORDER (Generate QR / Payment Link)
-//
-router.post(
-  "/create-order",
-  authenticate,
-  requireRole("patient"),
-  [
-    body("appointmentId")
-      .isMongoId()
-      .withMessage("Valid appointment ID is required"),
-  ],
-  validate,
-  async (req, res) => {
-    try {
-      const { appointmentId } = req.body;
-
-      // find appointment
-      const appointment = await Appointment.findById(appointmentId)
-        .populate("doctorId", "name specialization")
-        .populate("patientId", "name email phone");
-
-      if (!appointment) return res.notFound("Appointment not found");
-      if (appointment.patientId._id.toString() !== req.auth.id)
-        return res.forbidden("Access denied");
-      if (appointment.paymentStatus === "Paid")
-        return res.badRequest("Payment already completed");
-
-      // prepare transaction data
-      const transactionId = `APT_${appointmentId}_${Date.now()}`;
-      const amount = appointment.totalAmount.toFixed(2);
-
-      // checksum/hash (per FonePay documentation)
-      const rawData = `${FONEPAY_MERCHANT_CODE},${transactionId},${amount}`;
-      const hash = crypto
-        .createHash("sha512")
-        .update(rawData + FONEPAY_SECRET_KEY)
-        .digest("hex")
-        .toUpperCase();
-
-      // build redirect URL (if web) or QR link
-      const successUrl = `${process.env.FRONTEND_URL}/payment-success?tid=${transactionId}`;
-      const failureUrl = `${process.env.FRONTEND_URL}/payment-failed?tid=${transactionId}`;
-
-      // optional: dynamic QR / request payment
-      const fonePayPayload = {
-        MERCHANT_CODE: FONEPAY_MERCHANT_CODE,
-        PRN: transactionId,
-        AMOUNT: amount,
-        SUCCESS_URL: successUrl,
-        FAILURE_URL: failureUrl,
-        CHECKSUM: hash,
-      };
-
-      // usually, you would call FonePay's API to generate a payment link/QR
-      // (for demo we assume FonePay returns a redirect/QR URL)
-      const qrUrl = `${FONEPAY_BASE_URL}/pay?merchant=${FONEPAY_MERCHANT_CODE}&prn=${transactionId}&amt=${amount}&su=${encodeURIComponent(
-        successUrl
-      )}&fu=${encodeURIComponent(failureUrl)}&cs=${hash}`;
-
-      res.ok(
-        {
-          qrUrl,
-          transactionId,
-          amount,
-          merchantCode: FONEPAY_MERCHANT_CODE,
-        },
-        "FonePay payment order created successfully"
-      );
-    } catch (error) {
-      console.error("FonePay create-order error:", error);
-      res.serverError("Failed to create FonePay payment order", [
-        error.message,
-      ]);
+router.get("/fonepay", async (req, res) => {
+  try {
+    const { amount, invoice, remarks } = req.query;
+    if (!amount || !invoice) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Amount and invoice required" });
     }
+
+    const PRN = "TXN" + Date.now();
+    const responseUrl = "http://localhost:3000/payment-success";
+
+    // Return only JSON here
+    const fonepayUrl = `${
+      process.env.FONEPAY_BASE_URL
+    }/api/merchantRequest/pay?merchant=${
+      process.env.FONEPAY_MERCHANT_CODE
+    }&invoice=${invoice}&amount=${amount}&currency=524&PRN=${PRN}&remarks=${
+      remarks || "Payment"
+    }&responseUrl=${responseUrl}`;
+
+    // ✅ Return JSON to frontend (DO NOT redirect)
+    return res.json({
+      success: true,
+      paymentUrl: fonepayUrl,
+    });
+  } catch (error) {
+    console.error("Fonepay error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to generate payment URL" });
   }
-);
+});
 
-//
-// 2️⃣ VERIFY PAYMENT
-//
-router.post(
-  "/verify-payment",
-  authenticate,
-  requireRole("patient"),
-  [
-    body("appointmentId")
-      .isMongoId()
-      .withMessage("Valid appointment ID is required"),
-    body("transactionId").isString().withMessage("Transaction ID is required"),
-  ],
-  validate,
-  async (req, res) => {
-    try {
-      const { appointmentId, transactionId } = req.body;
+router.post("/create-order", async (req, res) => {
+  try {
+    const { appointmentId } = req.body;
 
-      // find appointment
-      const appointment = await Appointment.findById(appointmentId)
-        .populate("doctorId", "name specialization")
-        .populate("patientId", "name email phone");
-
-      if (!appointment) return res.notFound("Appointment not found");
-      if (appointment.patientId._id.toString() !== req.auth.id)
-        return res.forbidden("Access denied");
-
-      // Generate hash for verification API
-      const rawData = `${FONEPAY_MERCHANT_CODE},${transactionId}`;
-      const hash = crypto
-        .createHash("sha512")
-        .update(rawData + FONEPAY_SECRET_KEY)
-        .digest("hex")
-        .toUpperCase();
-
-      // call FonePay transaction verification API
-      const verifyUrl = `${FONEPAY_BASE_URL}/checkTransactionStatus`;
-      const response = await axios.post(verifyUrl, {
-        MERCHANT_CODE: FONEPAY_MERCHANT_CODE,
-        PRN: transactionId,
-        CHECKSUM: hash,
+    if (!appointmentId) {
+      return res.status(400).json({
+        success: false,
+        message: "Appointment ID required",
       });
-
-      const status = response.data?.STATUS || "FAILED";
-
-      if (status === "SUCCESS") {
-        appointment.paymentStatus = "Paid";
-        appointment.paymentMethod = "FonePay";
-        appointment.fonepayTransactionId = transactionId;
-        appointment.paymentDate = new Date();
-        await appointment.save();
-
-        await appointment.populate(
-          "doctorId",
-          "name specialization fees hospitalInfo profileImage"
-        );
-        await appointment.populate(
-          "patientId",
-          "name email phone profileImage"
-        );
-
-        res.ok(
-          appointment,
-          "Payment verified and appointment confirmed successfully"
-        );
-      } else {
-        res.badRequest("FonePay payment verification failed or pending", [
-          status,
-        ]);
-      }
-    } catch (error) {
-      console.error("FonePay verify-payment error:", error);
-      res.serverError("Failed to verify FonePay payment", [error.message]);
     }
+
+    // Dummy fallback while you don’t have FonePay credentials
+    const qrUrl =
+      "https://dummyimage.com/300x300/0f62fe/ffffff.png&text=FonePay+QR";
+    const transactionId = "TXN-" + Date.now();
+    const amount = 500; // or pull from appointment
+
+    // ✅ Return JSON (not HTML)
+    return res.json({
+      success: true,
+      data: {
+        qrUrl,
+        transactionId,
+        amount,
+      },
+    });
+  } catch (error) {
+    console.error("Payment create error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error creating payment order",
+    });
   }
-);
+});
+
+router.post("/verify-payment", async (req, res) => {
+  try {
+    const { appointmentId, transactionId } = req.body;
+
+    if (!appointmentId || !transactionId) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing appointmentId or transactionId",
+      });
+    }
+
+    // ✅ For demo: always succeed after 5 seconds
+    console.log(`Verifying payment for ${transactionId}...`);
+
+    // Simulate async delay (not needed but adds realism)
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    // Return success
+    return res.json({
+      success: true,
+      data: {
+        appointmentId,
+        transactionId,
+        paymentStatus: "PAID",
+        paidAt: new Date(),
+      },
+    });
+  } catch (error) {
+    console.error("Payment verify error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error verifying payment",
+    });
+  }
+});
 
 module.exports = router;

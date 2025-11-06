@@ -110,34 +110,24 @@ const PaymentStep = ({
       );
 
       // Polling check (optional)
-      const pollInterval = setInterval(async () => {
-        try {
-          const verifyResponse = await httpService.postWithAuth(
-            "/payment/verify-payment",
-            {
-              appointmentId,
-              transactionId,
-            }
-          );
-
-          if (verifyResponse.success) {
-            clearInterval(pollInterval);
-            paymentWindow?.close();
-            setPaymentStatus("success");
-            if (onPaymentSuccess) {
-              onPaymentSuccess(verifyResponse.data);
-            } else {
-              onConfirm();
-            }
-          }
-        } catch (error) {
-          console.log("Waiting for payment confirmation...");
+      //Mock demo verification: auto success after 5 seconds
+      setTimeout(() => {
+        paymentWindow?.close();
+        setPaymentStatus("success");
+        if (onPaymentSuccess) {
+          onPaymentSuccess({
+            appointmentId,
+            transactionId,
+            paymentStatus: "PAID",
+            paidAt: new Date(),
+          });
+        } else {
+          onConfirm();
         }
-      }, 3000);
+      }, 9000);
 
       // 3️⃣ Timeout if user cancels
       setTimeout(() => {
-        clearInterval(pollInterval);
         if (paymentStatus !== "success") {
           paymentWindow?.close();
           setPaymentStatus("failed");
@@ -197,19 +187,19 @@ const PaymentStep = ({
 
             <div className="flex justify-between">
               <span className="text-gray-600">Consultation Fee</span>
-              <span className="font-medium">रु {consultationFee}</span>
+              <span className="font-medium">NPR{consultationFee}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-600">Platform Fee</span>
-              <span className="font-medium">रु {platformFees}</span>
+              <span className="font-medium">NPR{platformFees}</span>
             </div>
 
             <Separator />
 
             <div className="flex justify-between text-lg">
               <span className="font-semibold">Total Amount</span>
-              <span className="font-bold text-green-600">रु {totalAmount}</span>
+              <span className="font-bold text-green-600">NPR{totalAmount}</span>
             </div>
           </div>
         </div>
@@ -319,7 +309,7 @@ const PaymentStep = ({
               <>
                 <CreditCard className="w-5 h-5 mr-2 " />
                 <span className="text-sm md:text-lg">
-                  Pay रु {totalAmount} & Book
+                  Pay NPR{totalAmount} & Book
                 </span>
               </>
             )}
