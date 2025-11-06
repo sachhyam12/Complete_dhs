@@ -87,6 +87,8 @@ const PaymentStep = ({
       setIsPaymentLoading(true);
       setError("");
       setPaymentStatus("processing");
+      console.log("appointmentId:", appointmentId);
+      console.log("amount:", totalAmount);
 
       // Create FonePay order
       const orderResponse = await httpService.postWithAuth(
