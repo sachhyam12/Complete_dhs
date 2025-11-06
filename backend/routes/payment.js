@@ -1,115 +1,172 @@
 const express = require("express");
 const router = express.Router();
+const crypto = require("crypto");
 const dotenv = require("dotenv");
 
 dotenv.config();
 
 /**
- * @route GET /api/payment/fonepay
- * @desc Generate Fonepay redirect URL (mock demo)
+ * @route GET /api/payment/esewa
+ * @desc Generate a direct eSewa redirect URL (for quick payment tests)
  * @access Public
  */
-router.get("/fonepay", async (req, res) => {
+router.get("/esewa", async (req, res) => {
   try {
     const { amount, invoice, remarks } = req.query;
+
     if (!amount || !invoice) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Amount and invoice required" });
+      return res.status(400).json({
+        success: false,
+        message: "Amount and invoice are required",
+      });
     }
 
-    const PRN = "TXN" + Date.now();
-    const responseUrl = "http://localhost:3000/payment-success";
+    const transaction_uuid = `TXN-${Date.now()}`;
+    const total_amount = amount;
+    const product_code = process.env.ESEWA_PRODUCT_CODE || "EPAYTEST";
+    const secret_key = process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q(";
 
-    // Return only JSON here
-    const fonepayUrl = `${
-      process.env.FONEPAY_BASE_URL
-    }/api/merchantRequest/pay?merchant=${
-      process.env.FONEPAY_MERCHANT_CODE
-    }&invoice=${invoice}&amount=${amount}&currency=524&PRN=${PRN}&remarks=${
-      remarks || "Payment"
-    }&responseUrl=${responseUrl}`;
+    // 🔐 Generate digital signature
+    const message = `total_amount=${total_amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
+    const signature = crypto
+      .createHmac("sha256", secret_key)
+      .update(message)
+      .digest("base64");
 
-    // ✅ Return JSON to frontend (DO NOT redirect)
+    // Construct redirect URL for demonstration
+    const paymentUrl = `${
+      process.env.ESEWA_BASE_URL || "https://rc-epay.esewa.com.np"
+    }/api/epay/main/v2/form?total_amount=${total_amount}&transaction_uuid=${transaction_uuid}&product_code=${product_code}&success_url=${
+      process.env.FRONTEND_URL || "http://localhost:3000"
+    }/payment/success&failure_url=${
+      process.env.FRONTEND_URL || "http://localhost:3000"
+    }/payment/failure&signature=${encodeURIComponent(
+      signature
+    )}&signed_field_names=total_amount,transaction_uuid,product_code`;
+
     return res.json({
       success: true,
-      paymentUrl: fonepayUrl,
+      paymentUrl,
+      details: {
+        transaction_uuid,
+        total_amount,
+        product_code,
+        signature,
+      },
     });
   } catch (error) {
-    console.error("Fonepay error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to generate payment URL" });
+    console.error("Esewa quickpay error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error generating eSewa redirect URL",
+    });
   }
 });
 
+/**
+ * @route POST /api/payment/esewa/create-order
+ * @desc Create a real eSewa payment form (for production)
+ * @access Public
+ */
 router.post("/create-order", async (req, res) => {
   try {
-    const { appointmentId } = req.body;
+    const { amount, appointmentId } = req.body;
 
-    if (!appointmentId) {
+    if (!amount || !appointmentId) {
       return res.status(400).json({
         success: false,
-        message: "Appointment ID required",
+        message: "Amount and appointmentId are required",
       });
     }
 
-    // Dummy fallback while you don’t have FonePay credentials
-    const qrUrl =
-      "https://dummyimage.com/300x300/0f62fe/ffffff.png&text=FonePay+QR";
-    const transactionId = "TXN-" + Date.now();
-    const amount = 500; // or pull from appointment
+    const transaction_uuid = `TXN-${Date.now()}`;
+    const product_code = process.env.ESEWA_PRODUCT_CODE || "EPAYTEST";
+    const secret_key = process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q(";
+    const total_amount = amount;
+    const tax_amount = 0;
+    const product_service_charge = 0;
+    const product_delivery_charge = 0;
 
-    // ✅ Return JSON (not HTML)
+    const message = `total_amount=${total_amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
+    const signature = crypto
+      .createHmac("sha256", secret_key)
+      .update(message)
+      .digest("base64");
+
+    const formData = {
+      amount,
+      tax_amount,
+      total_amount,
+      transaction_uuid,
+      product_code,
+      product_service_charge,
+      product_delivery_charge,
+      success_url: `${process.env.FRONTEND_URL}/payment/success`,
+      failure_url: `${process.env.FRONTEND_URL}/payment/failure`,
+      signed_field_names: "total_amount,transaction_uuid,product_code",
+      signature,
+    };
+
     return res.json({
       success: true,
       data: {
-        qrUrl,
-        transactionId,
-        amount,
+        formData,
+        paymentUrl:
+          process.env.ESEWA_BASE_URL ||
+          "https://rc-epay.esewa.com.np/api/epay/main/v2/form",
       },
     });
   } catch (error) {
-    console.error("Payment create error:", error);
+    console.error("Esewa create-order error:", error);
     res.status(500).json({
       success: false,
-      message: "Error creating payment order",
+      message: "Failed to create eSewa payment order",
     });
   }
 });
 
-router.post("/verify-payment", async (req, res) => {
+/**
+ * @route GET /api/payment/esewa/verify
+ * @desc Verify payment status from eSewa server
+ * @access Public
+ */
+router.get("/verify", async (req, res) => {
   try {
-    const { appointmentId, transactionId } = req.body;
+    const { product_code, total_amount, transaction_uuid } = req.query;
 
-    if (!appointmentId || !transactionId) {
+    if (!product_code || !total_amount || !transaction_uuid) {
       return res.status(400).json({
         success: false,
-        message: "Missing appointmentId or transactionId",
+        message: "Missing required fields for verification",
       });
     }
 
-    // ✅ For demo: always succeed after 5 seconds
-    console.log(`Verifying payment for ${transactionId}...`);
+    const verifyUrl = `https://rc.esewa.com.np/api/epay/transaction/status/?product_code=${product_code}&total_amount=${total_amount}&transaction_uuid=${transaction_uuid}`;
 
-    // Simulate async delay (not needed but adds realism)
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    const response = await fetch(verifyUrl);
+    const result = await response.json();
 
-    // Return success
-    return res.json({
-      success: true,
-      data: {
-        appointmentId,
-        transactionId,
-        paymentStatus: "PAID",
-        paidAt: new Date(),
-      },
-    });
+    if (result.status === "COMPLETE") {
+      return res.json({
+        success: true,
+        data: {
+          transaction_uuid: result.transaction_uuid,
+          ref_id: result.ref_id,
+          status: "SUCCESS",
+        },
+      });
+    } else {
+      return res.json({
+        success: false,
+        data: result,
+        message: "Payment not complete or failed",
+      });
+    }
   } catch (error) {
-    console.error("Payment verify error:", error);
+    console.error("Esewa verify error:", error);
     res.status(500).json({
       success: false,
-      message: "Error verifying payment",
+      message: "Failed to verify eSewa payment",
     });
   }
 });

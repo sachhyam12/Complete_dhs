@@ -176,7 +176,7 @@ const PatientOnboardingForm = () => {
                     name="phone"
                     type="tel"
                     value={formData.phone}
-                    placeholder="+977 ********"
+                    placeholder="+977 98******"
                     onChange={handleInputChnage}
                     required
                   />
