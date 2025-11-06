@@ -100,10 +100,12 @@ const PaymentStep = ({
         );
       }
 
-      const { qrUrl, transactionId, amount } = orderResponse.data;
+      const { formData, paymentUrl } = orderResponse.data;
+      const transactionId = formData.transaction_uuid;
+      const amount = formData.totalAmount;
 
       const paymentWindow = window.open(
-        qrUrl,
+        paymentUrl,
         "_blank",
         "width=500,height=700"
       );
