@@ -21,7 +21,9 @@ export default function PredictPage() {
       .filter((s) => s !== "");
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/predict", {
+      const AI_URL =
+        process.env.NEXT_PUBLIC_AI_MODEL_URL || "http://127.0.0.1:5000";
+      const response = await fetch(`${AI_URL}/predict`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
