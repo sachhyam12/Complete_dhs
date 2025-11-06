@@ -80,8 +80,8 @@ router.post("/create-order", async (req, res) => {
     }
 
     const transaction_uuid = `TXN-${Date.now()}`;
-    const product_code = process.env.ESEWA_PRODUCT_CODE || "EPAYTEST";
-    const secret_key = process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q(";
+    const product_code = process.env.ESEWA_MERCHANT_CODE || "EPAYTEST";
+    const secret_key = process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q";
     const total_amount = amount;
     const tax_amount = 0;
     const product_service_charge = 0;
