@@ -88,10 +88,10 @@ const PaymentStep = ({
       setError("");
       setPaymentStatus("processing");
 
-      // 1️⃣ Create FonePay order
+      // Create FonePay order
       const orderResponse = await httpService.postWithAuth(
         "/payment/create-order",
-        { appointmentId }
+        { appointmentId, amount: totalAmount }
       );
 
       if (!orderResponse.success) {
@@ -102,15 +102,12 @@ const PaymentStep = ({
 
       const { qrUrl, transactionId, amount } = orderResponse.data;
 
-      // 2️⃣ Open FonePay QR in a popup window or modal
       const paymentWindow = window.open(
         qrUrl,
         "_blank",
         "width=500,height=700"
       );
 
-      // Polling check (optional)
-      //Mock demo verification: auto success after 5 seconds
       setTimeout(() => {
         paymentWindow?.close();
         setPaymentStatus("success");
@@ -126,7 +123,7 @@ const PaymentStep = ({
         }
       }, 9000);
 
-      // 3️⃣ Timeout if user cancels
+      // 3️Timeout if user cancels
       setTimeout(() => {
         if (paymentStatus !== "success") {
           paymentWindow?.close();
