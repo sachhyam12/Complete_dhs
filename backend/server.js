@@ -23,7 +23,7 @@ app.use(morgan("dev"));
 app.use(
   cors({
     origin:
-      (process.env.ALLOWED_ORIGINS || "")
+      (process.env.ALLOWED_ORIGINS || "http://localhost:3000")
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean) || "*",
@@ -32,7 +32,8 @@ app.use(
 );
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 //used response
 app.use(response);
 

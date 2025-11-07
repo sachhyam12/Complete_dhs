@@ -26,7 +26,6 @@ router.get("/esewa", async (req, res) => {
     const product_code = process.env.ESEWA_PRODUCT_CODE || "EPAYTEST";
     const secret_key = process.env.ESEWA_SECRET_KEY || "8gBm/:&EnhH.1/q(";
 
-    // 🔐 Generate digital signature
     const message = `total_amount=${total_amount},transaction_uuid=${transaction_uuid},product_code=${product_code}`;
     const signature = crypto
       .createHmac("sha256", secret_key)
@@ -73,6 +72,10 @@ router.post("/create-order", async (req, res) => {
     const { amount, appointmentId } = req.body;
 
     if (!amount || !appointmentId) {
+      console.warn("Missing amount or appointmentId", {
+        amount,
+        appointmentId,
+      });
       return res.status(400).json({
         success: false,
         message: "Amount and appointmentId are required",
