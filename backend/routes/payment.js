@@ -111,9 +111,9 @@ router.post("/create-order", async (req, res) => {
       success: true,
       data: {
         formData,
-        paymentUrl:
-          process.env.ESEWA_BASE_URL ||
-          "https://rc-epay.esewa.com.np/api/epay/main/v2/form",
+        paymentUrl: `${
+          process.env.ESEWA_BASE_URL || "https://rc-epay.esewa.com.np"
+        }/api/epay/main/v2/form`,
       },
     });
   } catch (error) {

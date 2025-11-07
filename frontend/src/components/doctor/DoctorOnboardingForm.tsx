@@ -248,7 +248,7 @@ const DoctorOnboardingForm = () => {
                     id="hospitalName"
                     type="text"
                     value={formData.hospitalInfo.name}
-                    placeholder="e.g., Apollo Hospital"
+                    placeholder="e.g., Teaching Hospital"
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       handleHospitalInfoChnage("name", e.target.value)
                     }
@@ -276,7 +276,7 @@ const DoctorOnboardingForm = () => {
                     id="city"
                     type="text"
                     value={formData.hospitalInfo.city}
-                    placeholder="e.g., Mumbai"
+                    placeholder="e.g.,Kathmandu"
                     onChange={(e: ChangeEvent<HTMLInputElement>) =>
                       handleHospitalInfoChnage("city", e.target.value)
                     }

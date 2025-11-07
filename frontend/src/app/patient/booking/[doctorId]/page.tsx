@@ -185,8 +185,6 @@ const page = () => {
     );
   }
 
-  console.log("this is my current doctor", currentDoctor);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="bg-white border-b shadow-sm">

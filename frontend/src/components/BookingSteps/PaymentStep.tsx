@@ -55,7 +55,7 @@ const PaymentStep = ({
   const [shouldAutoOpen, setShouldAutoOpen] = useState(true);
   const modelCloseCountRef = useRef<number>(0);
 
-  // Auto-trigger FonePay QR generation
+  // 🔹 Auto-trigger payment when appointment is created
   useEffect(() => {
     if (
       appointmentId &&
@@ -77,7 +77,9 @@ const PaymentStep = ({
     shouldAutoOpen,
   ]);
 
+  // 🔹 eSewa Payment Function
   const handlePayment = async () => {
+    console.log("--------------Handling payment------------------");
     if (!appointmentId || !patientName) {
       onConfirm();
       return;
@@ -87,56 +89,52 @@ const PaymentStep = ({
       setIsPaymentLoading(true);
       setError("");
       setPaymentStatus("processing");
-      console.log("appointmentId:", appointmentId);
-      console.log("amount:", totalAmount);
+      console.log("Creating eSewa payment for appointment:", appointmentId);
 
-      // Create FonePay order
+      // ✅ Call backend to get payment info (do NOT post to eSewa here)
       const orderResponse = await httpService.postWithAuth(
         "/payment/create-order",
         { appointmentId, amount: totalAmount }
       );
-
+      console.log("-----------Order Response---------------", orderResponse);
       if (!orderResponse.success) {
         throw new Error(
-          orderResponse.message || "Failed to create FonePay payment order"
+          orderResponse.message || "Failed to create eSewa order"
         );
       }
 
       const { formData, paymentUrl } = orderResponse.data;
-      const transactionId = formData.transaction_uuid;
-      const amount = formData.totalAmount;
+      console.log("Sending to esewa", formData);
 
-      const paymentWindow = window.open(
-        paymentUrl,
-        "_blank",
-        "width=500,height=700"
-      );
+      // Create actual form to POST to eSewa
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = paymentUrl; // e.g., https://rc-epay.esewa.com.np/api/epay/main/v2/form
+      form.target = "_blank";
 
+      Object.entries(formData).forEach(([key, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value as string;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit(); // 🚀 Opens eSewa payment window
+      document.body.removeChild(form);
+
+      // (Optional) Poll backend for payment confirmation or simulate success
       setTimeout(() => {
-        paymentWindow?.close();
         setPaymentStatus("success");
-        if (onPaymentSuccess) {
-          onPaymentSuccess({
-            appointmentId,
-            transactionId,
-            paymentStatus: "PAID",
-            paidAt: new Date(),
-          });
-        } else {
-          onConfirm();
-        }
-      }, 9000);
-
-      // 3️Timeout if user cancels
-      setTimeout(() => {
-        if (paymentStatus !== "success") {
-          paymentWindow?.close();
-          setPaymentStatus("failed");
-          setError("Payment timeout or cancelled by user");
-        }
-      }, 60000); // 1 minute timeout
+        onPaymentSuccess?.({
+          appointmentId,
+          paymentStatus: "PAID",
+          paidAt: new Date(),
+        });
+      }, 8000);
     } catch (error: any) {
-      console.error("FonePay payment error", error);
+      console.error("eSewa payment error", error);
       setError(error.message || "Payment failed");
       setPaymentStatus("failed");
     } finally {
@@ -144,7 +142,7 @@ const PaymentStep = ({
     }
   };
 
-  const handlePaynow = () => {
+  const handlePayNow = () => {
     if (appointmentId && patientName) {
       modelCloseCountRef.current = 0;
       handlePayment();
@@ -188,38 +186,41 @@ const PaymentStep = ({
 
             <div className="flex justify-between">
               <span className="text-gray-600">Consultation Fee</span>
-              <span className="font-medium">NPR{consultationFee}</span>
+              <span className="font-medium">NPR {consultationFee}</span>
             </div>
 
             <div className="flex justify-between">
               <span className="text-gray-600">Platform Fee</span>
-              <span className="font-medium">NPR{platformFees}</span>
+              <span className="font-medium">NPR {platformFees}</span>
             </div>
 
             <Separator />
 
             <div className="flex justify-between text-lg">
               <span className="font-semibold">Total Amount</span>
-              <span className="font-bold text-green-600">NPR{totalAmount}</span>
+              <span className="font-bold text-green-600">
+                NPR {totalAmount}
+              </span>
             </div>
           </div>
         </div>
 
+        {/* Status UI */}
         <AnimatePresence mode="wait">
           {paymentStatus === "processing" && (
             <motion.div
               key="processing"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="text-center py-12"
             >
               <Loader2 className="w-12 h-12 mx-auto mb-4 text-blue-600 animate-spin" />
               <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                Processing Payment...
+                Redirecting to eSewa...
               </h4>
               <p className="text-gray-600 mb-4">
-                Please complete the payment in the FonePay window
+                Please complete the payment in the eSewa window
               </p>
               <Progress value={50} className="w-full" />
             </motion.div>
@@ -228,9 +229,9 @@ const PaymentStep = ({
           {paymentStatus === "success" && (
             <motion.div
               key="success"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="text-center py-12"
             >
               <CheckCircle className="w-16 h-16 mx-auto mb-4 text-green-600" />
@@ -238,7 +239,7 @@ const PaymentStep = ({
                 Payment Successful!
               </h4>
               <p className="text-gray-600 mb-4">
-                Your appointment has been confirmed
+                Your appointment has been confirmed.
               </p>
             </motion.div>
           )}
@@ -246,9 +247,9 @@ const PaymentStep = ({
           {paymentStatus === "failed" && (
             <motion.div
               key="failed"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               className="text-center py-12"
             >
               <XCircle className="w-16 h-16 mx-auto mb-4 text-red-600" />
@@ -274,7 +275,7 @@ const PaymentStep = ({
           <Shield className="w-6 h-6 text-green-600" />
           <div>
             <p className="font-medium text-green-800">Secure Payment</p>
-            <p>Your payment is protected by FonePay secure gateway</p>
+            <p>Your payment is protected by eSewa secure gateway</p>
           </div>
         </div>
       </div>
@@ -285,33 +286,24 @@ const PaymentStep = ({
             Back
           </Button>
           <Button
-            onClick={handlePaynow}
+            onClick={handlePayment}
             disabled={loading || isPaymentLoading}
             className="px-8 py-3 bg-green-600 hover:bg-green-700 text-lg font-semibold"
           >
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                <span className="text-sm md:text-lg">
-                  Creating Appointment...
-                </span>
+                Creating Appointment...
               </>
             ) : isPaymentLoading ? (
               <>
                 <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                <span className="text-sm md:text-lg">Processing...</span>
-              </>
-            ) : appointmentId && patientName ? (
-              <>
-                <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                <span className="text-sm md:text-lg">Opening FonePay...</span>
+                Processing...
               </>
             ) : (
               <>
-                <CreditCard className="w-5 h-5 mr-2 " />
-                <span className="text-sm md:text-lg">
-                  Pay NPR{totalAmount} & Book
-                </span>
+                <CreditCard className="w-5 h-5 mr-2" />
+                Pay NPR {totalAmount} & Book
               </>
             )}
           </Button>
