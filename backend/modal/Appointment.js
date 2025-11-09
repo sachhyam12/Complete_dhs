@@ -50,7 +50,6 @@ const appointmentSchema = new mongoose.Schema(
     payoutDate: { type: Date },
     paymentMethod: { type: String, default: "Online" },
 
-    //fonePay payment field
     fonepayOrderId: { type: String },
     fonepayPaymentId: { type: String },
     fonepaySignature: { type: String },
@@ -59,8 +58,6 @@ const appointmentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//1 means accending order
-//unique: true means uniquness is enfoced across that combination of filds
 appointmentSchema.index(
   { doctorId: 1, date: 1, slotStartIso: 1 },
   { unique: true }

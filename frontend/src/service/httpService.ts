@@ -62,7 +62,6 @@ class HttpService {
     }
   }
 
-  //Method with authentication
   async getWithAuth<T = any>(
     endPoint: string,
     options?: RequestOptions
@@ -109,14 +108,12 @@ class HttpService {
   }
 }
 
-//Export the singleton instance
 export const httpService = new HttpService();
-
-//bind create a new function where this is permanently set to the instance of HttpService
 
 export const getWithAuth = httpService.getWithAuth.bind(httpService);
 export const postWithAuth = httpService.postWithAuth.bind(httpService);
 export const putWithAuth = httpService.putWithAuth.bind(httpService);
 export const deleteWithAuth = httpService.deleteWithAuth.bind(httpService);
+
 export const postWithoutAuth = httpService.postWithoutAuth.bind(httpService);
 export const getWithoutAuth = httpService.getWithoutAuth.bind(httpService);

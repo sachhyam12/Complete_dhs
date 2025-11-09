@@ -174,7 +174,7 @@ router.post("/book", authenticate, requireRole("patient"), [
         consultationFees,
         platformFees,
         totalAmount,
-        paymentStatus: "Pending",
+        paymentStatus: "paid",
         payoutStatus: "Pending",
       });
 
@@ -291,7 +291,6 @@ router.get("/:id", authenticate, async (req, res) => {
       return res.notFound("Appointment not found");
     }
 
-    //check if user has access to this appointment
     const userRole = req.auth.type;
     if (
       userRole === "doctor" &&
@@ -311,6 +310,30 @@ router.get("/:id", authenticate, async (req, res) => {
   } catch (error) {
     console.error("Get appointment error", error);
     res, serverError("Failed to Get appointment", [error.message]);
+  }
+});
+
+router.put("/appointments/:id/mark-paid", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { paymentStatus } = req.body;
+
+    const updated = await Appointment.findByIdAndUpdate(
+      id,
+      { paymentStatus: paymentStatus || "paid" },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Appointment not found" });
+    }
+
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    console.error("Error updating appointment:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 

@@ -55,7 +55,6 @@ const PaymentStep = ({
   const [shouldAutoOpen, setShouldAutoOpen] = useState(true);
   const modelCloseCountRef = useRef<number>(0);
 
-  // 🔹 Auto-trigger payment when appointment is created
   useEffect(() => {
     if (
       appointmentId &&
@@ -77,7 +76,6 @@ const PaymentStep = ({
     shouldAutoOpen,
   ]);
 
-  // 🔹 eSewa Payment Function
   const handlePayment = async () => {
     console.log("--------------Handling payment------------------");
     if (!appointmentId || !patientName) {
@@ -91,11 +89,11 @@ const PaymentStep = ({
       setPaymentStatus("processing");
       console.log("Creating eSewa payment for appointment:", appointmentId);
 
-      // ✅ Call backend to get payment info (do NOT post to eSewa here)
       const orderResponse = await httpService.postWithAuth(
         "/payment/create-order",
         { appointmentId, amount: totalAmount }
       );
+
       console.log("-----------Order Response---------------", orderResponse);
       if (!orderResponse.success) {
         throw new Error(
@@ -104,12 +102,10 @@ const PaymentStep = ({
       }
 
       const { formData, paymentUrl } = orderResponse.data;
-      console.log("Sending to esewa", formData);
 
-      // Create actual form to POST to eSewa
       const form = document.createElement("form");
       form.method = "POST";
-      form.action = paymentUrl; // e.g., https://rc-epay.esewa.com.np/api/epay/main/v2/form
+      form.action = paymentUrl;
       form.target = "_blank";
 
       Object.entries(formData).forEach(([key, value]) => {
@@ -121,18 +117,39 @@ const PaymentStep = ({
       });
 
       document.body.appendChild(form);
-      form.submit(); // 🚀 Opens eSewa payment window
+      form.submit();
       document.body.removeChild(form);
 
-      // (Optional) Poll backend for payment confirmation or simulate success
-      setTimeout(() => {
-        setPaymentStatus("success");
-        onPaymentSuccess?.({
-          appointmentId,
-          paymentStatus: "PAID",
-          paidAt: new Date(),
-        });
-      }, 8000);
+      setTimeout(async () => {
+        try {
+          await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/appointment/appointments/${appointmentId}/mark-paid`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ paymentStatus: "Paid" }),
+              credentials: "include",
+            }
+          );
+
+          localStorage.setItem(
+            "bookedDoctor",
+            JSON.stringify({
+              name: doctorName,
+              consultationType,
+              date: selectedDate?.toLocaleDateString(),
+              slot: selectedSlot,
+            })
+          );
+
+          setPaymentStatus("success");
+
+          window.location.href = "/patient/dashboard";
+        } catch (err) {
+          console.error("Error marking appointment paid:", err);
+          window.location.href = "/patient/dashboard";
+        }
+      }, 3000);
     } catch (error: any) {
       console.error("eSewa payment error", error);
       setError(error.message || "Payment failed");

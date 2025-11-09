@@ -36,10 +36,8 @@ const PatientDashboardContent = () => {
     }
   }, [user, activeTab, fetchAppointments]);
 
-  //update tab counts whever appointmnet chnage
   useEffect(() => {
     const now = new Date();
-    //filter the upcoming appointmnet
     const upcomingAppointments = appointments.filter((apt) => {
       const aptDate = new Date(apt.slotStartIso);
       return (
@@ -48,7 +46,6 @@ const PatientDashboardContent = () => {
       );
     });
 
-    //filter the past appointmnet
     const pastAppointments = appointments.filter((apt) => {
       const aptDate = new Date(apt.slotStartIso);
       return (
@@ -89,8 +86,8 @@ const PatientDashboardContent = () => {
 
     return (
       isToday(appointment.slotStartIso) &&
-      diffMintues <= 15 && //not earliar than 15 min before start
-      diffMintues >= -120 && //not later than 2 hours after start
+      diffMintues <= 15 &&
+      diffMintues >= -120 &&
       (appointment.status === "Scheduled" ||
         appointment.status === "In Progress")
     );

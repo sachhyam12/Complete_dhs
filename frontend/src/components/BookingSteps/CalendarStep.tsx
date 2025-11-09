@@ -51,7 +51,6 @@ const CalendarStep = ({
     const selectedDay = new Date(selectedDate);
     selectedDay.setHours(0, 0, 0, 0);
 
-    //Only apply this checkl for today date
     if (selectedDay.getTime() === today.getTime()) {
       const [time, modifier] = slot.split(" ");
       let [hour, minutes] = time.split(":");
@@ -79,138 +78,139 @@ const CalendarStep = ({
     return false;
   };
 
-
-  const isDateDisabled = (date:Date) : boolean => {
+  const isDateDisabled = (date: Date): boolean => {
     const today = startOfDay(new Date());
-    const checkedDate = startOfDay(date)
+    const checkedDate = startOfDay(date);
 
-    if(checkedDate< today) return true;
+    if (checkedDate < today) return true;
 
-    //check if date is in avaible range
     const ymd = toLocalYMD(date);
-    if(!availableDates.includes(ymd)) return true;
+    if (!availableDates.includes(ymd)) return true;
 
-    //check weekday exclusion
-    const jsWeekday = date.getDay();  //0= sunday
-    return excludedWeekdays.includes(jsWeekday)
-  }
+    const jsWeekday = date.getDay();
+    return excludedWeekdays.includes(jsWeekday);
+  };
 
   return (
     <div className="space-y-8">
-        <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                Select Date & Time
-            </h3>
-            <div className="grid md:grid-cols-2 gap-8">
-               <div>
-                <Label className="text-base font-semibold mb-4 block">Choose Date</Label>
-                <div className="border rounded-lg p-4">
-                 <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  disabled={isDateDisabled}
-                  className="rounded-md"
-                  classNames={{
-                     day_selected: 'bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 foucus:text-white',
-                     day_today: 'bg-blue-100 text-blue-900 font-bold',
-                     day_disabled: 'text-gray-300 opacity-50 cursor-not-allowed'
-                  }}
-                 />
-                </div>
-               </div>
-
-
-              {/* Time slots */}
-              <div>
-                <Label className="text-base font-semibold mb-4 block">
-                  Available Time Slots
-                  {availableSlots.length > 0 && (
-                    <span className="text-sm font-normal text-gray-500 ml-2">
-                      ({availableSlots.length} slots avaiable)
-                    </span>
-                  )}
-                </Label>
-
-                {selectedDate ? (
-                  availableSlots.length > 0 ? (
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-2 gap-3 mx-h-80 overflow-y-auto">
-                        {displaySlots.map((slot) => {
-                          const isSelected= selectedSlot === slot;
-                          const isBooked = isSlotBooked(slot);
-                          const isPast = isSlotInPast(slot);
-                          const isDisabled = isBooked || isPast;
-                          
-
-                          return (
-                             <Button
-                              key={slot}
-                               variant={isSelected ? 'default' : 'outline'}
-                               disabled={isDisabled}
-                               className={`p-3 justify-start ${isDisabled ? 'opacity-50 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200' : isSelected ? "bg-blue-600 text-white shadow-lg" : "hover:border-blue-200 hover:bg-blue-50"}`}
-                               onClick={() => !isDisabled && setSelectedSlot(slot)}
-                             >
-
-                              <Clock className="w-4 h-4 mr-2"/>
-                              {slot}
-                              {isPast && (
-                                <span className="text-xs ml-2 opacity-75">
-                                  (Past)
-                                </span>
-                              )}
-                                   {isBooked  &&  !isPast &&(
-                                <span className="text-xs ml-2 opacity-75">
-                                  (Booked)
-                                </span>
-                              )}
-
-                             </Button>
-                          )
-                        })}
-
-                      </div>
-                      {availableSlots.length > 10 && (
-                        <Button
-                         variant='outline'
-                         onClick={()=> setShowMoreSlots(!showMoreSlots)}
-                        >
-                          {showMoreSlots ? 'Show Less' : `+ ${availableSlots.length -10} show more`}
-                        </Button>
-                      )}
-              
-                      </div>
-
-
-                  ): (
-                    <div className="text-center py-12 text-gray-500">
-                      <Clock className="w-16 h-16 mx-auto mb-4 opacity-30"/>
-                      <h4 className="text-lg font-medium mb-2">
-                                 No slots available
-                      </h4>
-                      <p className="text-sm">Please Select a different date</p>
-                      </div> 
-                  )
-                ): (
-                    <div className="text-center py-12 text-gray-500">
-                      <CalendarIcon className="w-16 h-16 mx-auto mb-4 opacity-30"/>
-                      <p className="text-sm">Please Select a date to view available slots</p>
-                      </div> 
-                )}
-              </div>
+      <div>
+        <h3 className="text-2xl font-bold text-gray-900 mb-6">
+          Select Date & Time
+        </h3>
+        <div className="grid md:grid-cols-2 gap-8">
+          <div>
+            <Label className="text-base font-semibold mb-4 block">
+              Choose Date
+            </Label>
+            <div className="border rounded-lg p-4">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                disabled={isDateDisabled}
+                className="rounded-md"
+                classNames={{
+                  day_selected:
+                    "bg-blue-600 text-white hover:bg-blue-600 hover:text-white focus:bg-blue-600 foucus:text-white",
+                  day_today: "bg-blue-100 text-blue-900 font-bold",
+                  day_disabled: "text-gray-300 opacity-50 cursor-not-allowed",
+                }}
+              />
             </div>
-        </div>
+          </div>
 
-        <div className="flex justify-end">
-           <Button
-           onClick={onContinue}
-           disabled={!selectedDate || !selectedSlot}
-           className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-lg font-semibold"
-          >
-            Continue
-          </Button>
-        </div>
+          {/* Time slots */}
+          <div>
+            <Label className="text-base font-semibold mb-4 block">
+              Available Time Slots
+              {availableSlots.length > 0 && (
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  ({availableSlots.length} slots avaiable)
+                </span>
+              )}
+            </Label>
 
+            {selectedDate ? (
+              availableSlots.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3 mx-h-80 overflow-y-auto">
+                    {displaySlots.map((slot) => {
+                      const isSelected = selectedSlot === slot;
+                      const isBooked = isSlotBooked(slot);
+                      const isPast = isSlotInPast(slot);
+                      const isDisabled = isBooked || isPast;
+
+                      return (
+                        <Button
+                          key={slot}
+                          variant={isSelected ? "default" : "outline"}
+                          disabled={isDisabled}
+                          className={`p-3 justify-start ${
+                            isDisabled
+                              ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400 border-gray-200"
+                              : isSelected
+                              ? "bg-blue-600 text-white shadow-lg"
+                              : "hover:border-blue-200 hover:bg-blue-50"
+                          }`}
+                          onClick={() => !isDisabled && setSelectedSlot(slot)}
+                        >
+                          <Clock className="w-4 h-4 mr-2" />
+                          {slot}
+                          {isPast && (
+                            <span className="text-xs ml-2 opacity-75">
+                              (Past)
+                            </span>
+                          )}
+                          {isBooked && !isPast && (
+                            <span className="text-xs ml-2 opacity-75">
+                              (Booked)
+                            </span>
+                          )}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  {availableSlots.length > 10 && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowMoreSlots(!showMoreSlots)}
+                    >
+                      {showMoreSlots
+                        ? "Show Less"
+                        : `+ ${availableSlots.length - 10} show more`}
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <Clock className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                  <h4 className="text-lg font-medium mb-2">
+                    No slots available
+                  </h4>
+                  <p className="text-sm">Please Select a different date</p>
+                </div>
+              )
+            ) : (
+              <div className="text-center py-12 text-gray-500">
+                <CalendarIcon className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                <p className="text-sm">
+                  Please Select a date to view available slots
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end">
+        <Button
+          onClick={onContinue}
+          disabled={!selectedDate || !selectedSlot}
+          className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-lg font-semibold"
+        >
+          Continue
+        </Button>
+      </div>
     </div>
   );
 };

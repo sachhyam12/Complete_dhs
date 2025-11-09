@@ -83,7 +83,6 @@ export const useAdminStore = create<AdminState>((set) => ({
       set({ loading: true });
       await adminService.deleteDoctor(id);
 
-      // Remove deleted doctor from store
       set((state) => ({
         doctors: state.doctors?.filter((doc) => doc._id !== id) || [],
       }));

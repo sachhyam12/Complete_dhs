@@ -22,7 +22,6 @@ import {
 } from "../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { userAuthStore } from "@/store/authStore";
-// import SymptomForm from "../SymptomForm";
 
 interface HeaderProps {
   showDashboardNav?: boolean;
@@ -38,8 +37,6 @@ const Header: React.FC<HeaderProps> = ({ showDashboardNav = false }) => {
   const { user, isAuthenticated, logout } = userAuthStore();
   const pathname = usePathname();
   const router = useRouter();
-
-  // const [showSymptomForm, setShowSymptomForm] = useState(false);
 
   const handleLogout = () => {
     logout();

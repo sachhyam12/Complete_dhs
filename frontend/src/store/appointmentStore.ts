@@ -47,11 +47,9 @@ interface AppointmentState {
   loading: boolean;
   error: string | null;
 
-  //Actions
   clearError: () => void;
   setCurrentAppointment: (appointment: Appointment) => void;
 
-  //Api Actions
   fetchAppointments: (
     role: "doctor" | "patient",
     tab?: string,
@@ -215,18 +213,19 @@ export const useAppointmentStore = create<AppointmentState>((set, get) => ({
     }
   },
   updateAppointmentStatus: async (appointmentId, status) => {
-     set({ loading: true, error: null });
+    set({ loading: true, error: null });
     try {
-      const response = await putWithAuth(`/appointment/status/${appointmentId}`, {status});
+      const response = await putWithAuth(
+        `/appointment/status/${appointmentId}`,
+        { status }
+      );
       set((state) => ({
         appointments: state.appointments.map((apt) =>
-          apt._id === appointmentId
-            ? { ...apt, staus: status as any }
-            : apt
+          apt._id === appointmentId ? { ...apt, staus: status as any } : apt
         ),
         currentAppointment:
           state.currentAppointment?._id === appointmentId
-            ? { ...state.currentAppointment, status: status as any}
+            ? { ...state.currentAppointment, status: status as any }
             : state.currentAppointment,
       }));
 

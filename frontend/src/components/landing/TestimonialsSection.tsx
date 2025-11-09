@@ -65,9 +65,9 @@ const TestimonialsSection = () => {
         </div>
 
         <div className="text-center mt-8">
-       <button className="text-chart-2 hover:text-chart-2/80 font-medium transition-colors duration-200">
-        Read more
-       </button>
+          <button className="text-chart-2 hover:text-chart-2/80 font-medium transition-colors duration-200">
+            Read more
+          </button>
         </div>
       </div>
     </section>

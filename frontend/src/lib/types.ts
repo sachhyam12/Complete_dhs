@@ -1,4 +1,3 @@
-// Define proper TypeScript interfaces
 export interface TimeRange {
   start: string;
   end: string;
@@ -18,7 +17,7 @@ export interface HospitalInfo {
 
 export interface DoctorFormData {
   specialization: string;
-  categories: string[]; // Explicitly typed as string array
+  categories: string[];
   qualification: string;
   experience: string;
   about: string;
@@ -29,7 +28,6 @@ export interface DoctorFormData {
   slotDurationMinutes?: number;
 }
 
-// ✅ Enhanced User Interface
 export interface User {
   id: string;
   name: string;
@@ -39,7 +37,6 @@ export interface User {
   profileImage?: string;
   isVerified: boolean;
 
-  // Patient fields
   dob?: string;
   gender?: string;
   bloodGroup?: string;
@@ -55,7 +52,6 @@ export interface User {
     relationship?: string;
   };
 
-  // Doctor fields
   specialization?: string;
   about?: string;
   category?: string[];
@@ -68,7 +64,6 @@ export interface User {
     city?: string;
   };
 
-  // ✅ Doctor availability fields
   availabilityRange?: {
     startDate?: string;
     endDate?: string;
@@ -81,7 +76,6 @@ export interface User {
   slotDurationMinutes?: number;
 }
 
-// interfaces/Doctor.ts
 export interface Doctor {
   _id: string;
   name: string;
@@ -103,8 +97,8 @@ export interface Doctor {
     excludedWeekdays: number[];
   };
   dailyTimeRanges: {
-    start: string; // e.g., "09:00"
-    end: string; // e.g., "12:00"
+    start: string;
+    end: string;
   }[];
   slotDurationMinutes: number;
   profileImage: string;

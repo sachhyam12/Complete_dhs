@@ -119,14 +119,12 @@ router.get("/doctors", verifyAdmin, async (req, res) => {
       return res.status(403).json({ success: false, message: "Unauthorized" });
     }
 
-    // optional: pagination params
     const page = parseInt(req.query.page || "1", 10);
     const limit = Math.min(parseInt(req.query.limit || "25", 10), 100);
     const skip = (page - 1) * limit;
 
-    // choose fields you want to expose
     const doctors = await Doctor.find({})
-      .select("username name email isActive createdAt") // adjust fields per your model
+      .select("username name email isActive createdAt")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -160,7 +158,6 @@ router.post("/add-doctor", verifyAdmin, async (req, res) => {
       });
     }
 
-    // Check if doctor already exists
     const existing = await Doctor.findOne({ email });
     if (existing) {
       return res
@@ -229,7 +226,6 @@ router.post("/toggle-doctor/:id", verifyAdmin, async (req, res) => {
         .status(404)
         .json({ success: false, message: "Doctor not found" });
 
-    // Toggle the boolean
     doctor.isActive = !doctor.isActive;
     await doctor.save();
 

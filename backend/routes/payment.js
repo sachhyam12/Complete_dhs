@@ -32,7 +32,6 @@ router.get("/esewa", async (req, res) => {
       .update(message)
       .digest("base64");
 
-    // Construct redirect URL for demonstration
     const paymentUrl = `${
       process.env.ESEWA_BASE_URL || "https://rc-epay.esewa.com.np"
     }/api/epay/main/v2/form?total_amount=${total_amount}&transaction_uuid=${transaction_uuid}&product_code=${product_code}&success_url=${
@@ -133,43 +132,66 @@ router.post("/create-order", async (req, res) => {
  * @desc Verify payment status from eSewa server
  * @access Public
  */
-router.get("/verify", async (req, res) => {
-  try {
-    const { product_code, total_amount, transaction_uuid } = req.query;
 
-    if (!product_code || !total_amount || !transaction_uuid) {
+/**
+ * @route POST /api/payment/esewa/verify-payment
+ * @desc Verify payment with eSewa and update appointment
+ * @access Public
+ */
+router.post("/verify", async (req, res) => {
+  try {
+    const { amt, oid, refId } = req.body;
+
+    console.log("🔍 Verifying payment:", { amt, oid, refId });
+
+    if (!amt || !oid || !refId) {
       return res.status(400).json({
         success: false,
-        message: "Missing required fields for verification",
+        message: "Missing required fields",
       });
     }
 
-    const verifyUrl = `https://rc.esewa.com.np/api/epay/transaction/status/?product_code=${product_code}&total_amount=${total_amount}&transaction_uuid=${transaction_uuid}`;
+    const formData = new URLSearchParams({
+      amt,
+      rid: refId,
+      pid: oid,
+      scd: process.env.ESEWA_MERCHANT_CODE || "EPAYTEST",
+    });
 
-    const response = await fetch(verifyUrl);
-    const result = await response.json();
+    const verifyResponse = await fetch(
+      "https://uat.esewa.com.np/epay/transrec",
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
 
-    if (result.status === "COMPLETE") {
+    const text = await verifyResponse.text();
+
+    if (text.includes("<response_code>Success</response_code>")) {
+      await Appointment.findByIdAndUpdate(oid, {
+        paymentStatus: "paid",
+        status: "Scheduled",
+        transactionId: refId,
+        amountPaid: amt,
+      });
+
       return res.json({
         success: true,
-        data: {
-          transaction_uuid: result.transaction_uuid,
-          ref_id: result.ref_id,
-          status: "SUCCESS",
-        },
+        message: "Payment verified successfully",
       });
     } else {
       return res.json({
         success: false,
-        data: result,
-        message: "Payment not complete or failed",
+        message: "Payment not verified",
+        rawResponse: text,
       });
     }
   } catch (error) {
-    console.error("Esewa verify error:", error);
+    console.error("❌ Error verifying payment:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to verify eSewa payment",
+      message: "Verification failed",
     });
   }
 });
